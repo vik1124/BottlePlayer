@@ -1,4 +1,3 @@
- 
 audTemp ="""
  <audio id="audElement" controls class="media-object">
         <source src="./doc/%(fname)s" type="audio/mpeg" />
@@ -6,18 +5,29 @@ audTemp ="""
  </audio>
  """
  
- 
 from bottle import Bottle,route, run, template, static_file,request,redirect
-import os
+import os,sched,time
 from multiprocessing import Process
-import time
+from mutagen.mp3 import MP3
+from mutagen.easyid3 import EasyID3
+import socket
+import webbrowser
 #import android
 #droid = android.Android()
 
+sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+sock.connect(("gmail.com",80))
+hostip= sock.getsockname()[0]
+sock.close()
+print "hostip:",hostip
+
 temp='puriyavillai-hq.mp3'
-hostip='192.168.2.4'
 extip='98.235.224.147'
 porty = 18080
+timeset = 0
+currtime = 0.0
+starttime = 0.0
+audtime = 0.0
 
 app = Bottle()
 
@@ -34,9 +44,10 @@ def home_page():
 	global temp
 	global hostip
 	global extip
+	global timeset
 	print temp
-	#return template('playtest', AudioFile='/doc/'+temp)
-	return template('playtest', AudioFile='http://'+extip+':'+str(porty)+'/mplay/'+temp,audList=getAudioList())
+	timeset= readTime()
+	return template('playtest', AudioFile='http://'+hostip+':'+str(porty)+'/mplay/'+temp,audList=getAudioList(), time_set = timeset, playList = GenPlayList())
 	
 @app.route('/mplay/<fname>')
 def play_file(fname):
@@ -64,8 +75,31 @@ def getAudioList():
 	audlist=[]
 	for i in list:
 		if not os.path.isdir(i):
-			if str.split(i,'.')[1] in ['mp3']:
+			temp = str.split(i,'.')
+			if temp[len(temp)-1] in ['mp3']:
 				audlist.append(i)
 	return audlist
+	
+def GenPlayList():
+	global hostip,porty
+	list = os.listdir('./doc/')
+	audlist=""
+	for i in list:
+		if not os.path.isdir(i):
+			temp = str.split(i,'.')
+			if temp[len(temp)-1] in ['mp3']:
+				audlist=audlist +'"http://'+hostip+':'+str(porty)+'/mplay/'+i+'",'
+	return audlist[:-1]
+	
+def readTime():
+	global temp
+	f = open('timeset.txt','rb')
+	temp = f.readline().rstrip()
+	val = float(f.readline())
+	f.close()
+	return val
 
-run(app,host=hostip, port=porty, reloader=True, interval=0.5)
+if __name__ == "__main__" :
+	webbrowser.open_new_tab('http://'+hostip+':'+str(porty))
+	run(app,host=hostip, port=porty)
+	print "app running !"

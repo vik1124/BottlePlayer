@@ -39,5 +39,32 @@
         </div>
        </form>
     </div>
+	<script type="text/javascript">
+		x=document.getElementById("audElement");
+		var playList = new Array({{!playList}});
+		function getCurTime()
+		{ 
+		alert(x.currentTime);
+		} 
+		function setCurTime()
+		{ 
+		x.currentTime={{time_set}};
+		} 
+		x.addEventListener('ended',function(e){
+		var cnt = playList.indexOf(x.src);
+		if (cnt == playList.length-1)
+		{
+			cnt = 0;
+		}
+		else
+		{
+			cnt = cnt + 1;
+		}
+		x.src = playList[cnt];
+		x.load();
+		x,play();
+		});
+		window.onload = setCurTime;
+	</script>
 </body>
 </html>
